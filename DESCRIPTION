@@ -1,0 +1,14 @@
+Package: GSCA
+Type: Package
+Title: Gene Set Co-expression Analysis
+Version: 1.1.1
+Date: 11-09-2009
+Author: Andrew L. Thurman, YounJeong Choi, and Christina Kendziorski
+Maintainer: Christina Kendziorski <kendzior@biostat.wisc.edu>
+Depends: Rgraphviz, gplots, Biobase
+Description: Runs various gene set correlation analyses, including
+        single and multiple study differential correlation analysis;
+   the code also contains some network plotting functions.
+License: LGPL >= 2.0
+LazyLoad: yes
+Packaged: 2009-09-12 02:27:57 UTC; kendzior

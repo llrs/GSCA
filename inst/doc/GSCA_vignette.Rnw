@@ -1,0 +1,199 @@
+
+% R CMD Sweave GSCA_vignette.Rnw
+% pdflatex GSCA_vignette.tex
+
+\documentclass{article}
+
+\begin{document}
+
+\SweaveOpts{engine = R}
+%\VignetteIndexEntry{Using GSCA package}
+%\VignetteDepends{GSCA, Rgraphviz, gplots}
+%\VignettePackage{GSCA}
+
+
+\title{GSCA: Gene Set Correlation Analysis}
+\author{YounJeong Choi}
+\maketitle
+
+\section{Introduction}
+
+%motivates the work (not too long - maybe 2 or 3 paragraphs) and 
+%also outlines what the package contains. 
+
+%``A first step in any gene set correlation analysis
+%is to match genes across studies. Give some info. This package assumes matching has
+%been done prior to analysis. Here, LungCancer3 contains matched data from XXX" And I would
+%then remove the separate section entitled Lung Cancer data.
+
+{\tt LungCancer3} in the package includes matched data matrices 
+from the three lung cancer microarray experiments, along with 
+the gene set definitions (in Entrez Gene ID) and their descriptions.
+
+Gene matching by Entrez Gene ID provides 3,924 common genes across
+the 3 studies of interest. Expression matrix rows are named in Entrez Gene IDs.
+Multiple transcripts representing one ID have been averaged at the log level
+before matching.
+
+%% Code chunk 1
+<<>>=
+library(GSCA)
+data(LungCancer3)
+str(LungCancer3$data)
+str(LungCancer3$info$GSdef[1:3])
+str(LungCancer3$info$Name)
+@
+
+The {\tt info} portion in {\tt LungCancer3} contains gene set definitions
+{\tt GSdef} as a list of 3,649 gene sets. Each entry in the list is 
+a character vector of Entrez Gene IDs that belong to the corresponding 
+gene set. A particular set can be pulled out, for example, 
+GO:0008033 as shown here.
+
+%% Code chunk 2
+<<>>=
+GS <- LungCancer3$info$GSdef
+GSdesc <- LungCancer3$info$Name
+setid <- "GO:0008033"
+GS[[setid]]
+GSdesc[setid]
+@ 
+
+
+\section{Single-study differential correlation}
+
+%As an example for section 2, you can start by saying, "The most basic GSC analysis consists of quantifying the difference in correlation between conditions within a single study. For this, the
+%function singleDC can be used; single DC calculates a dispersion index...
+
+The function {\tt singleDC} calculates a dispersion index between 
+the tumor and normal groups for every gene set within a study.
+It also calculates permutation-based $p$-values based on the given number 
+of sample permutations.
+For example, if the Michigan study is of interest, one can do the following.
+We try with 3 permutations to save time.
+
+%% Code chunk 3
+<<>>=
+dc.M <- singleDC(data = LungCancer3$data$Michigan,
+                 group = c(86, 10), GSdefList = GS, nperm = 3)
+str(dc.M)
+@ 
+
+
+\section{Meta-analysis of multiple studies}
+
+The function {\tt metaDI} calculates a dispersion index between 
+two studies for every gene set. We choose to use the sign of 
+correlation difference between tumor and normal groups from each study here,
+but the function itself can be used with the raw correlations as well.
+It also calculates permutation-based $p$-values based on the given number 
+of permutations. The permutation here is annotated gene pair permutation.
+For example, if the Harvard and Michigan studies are of interest, 
+one can do the following. We try with 3 permutations to save time.
+
+%% Code chunk 4
+<<>>=
+data.grouped <- list(Tumor =
+                     list(Harvard = LungCancer3$data$Harvard[, 1:139],
+                          Stanford = LungCancer3$data$Stanford[, 1:41],
+                          Michigan = LungCancer3$data$Michigan[, 1:86]),
+                     Normal =
+                     list(Harvard = LungCancer3$data$Harvard[, 140:156],
+                          Stanford = LungCancer3$data$Stanford[, 42:46],
+                          Michigan = LungCancer3$data$Michigan[, 87:96]))
+corr.t <- lapply(lapply(data.grouped$Tumor, t), cor,
+                 use = "pairwise.complete.obs")
+corr.n <- lapply(lapply(data.grouped$Normal, t), cor,
+                 use = "pairwise.complete.obs")
+cor.diff <- list(Harvard = corr.t$Harvard - corr.n$Harvard,
+                 Michigan = corr.t$Michigan - corr.n$Michigan)
+cor.diff.sign <- list(Harvard =
+                      apply((cor.diff$Harvard > 0), 2, as.numeric) -
+                      apply((cor.diff$Harvard < 0), 2, as.numeric),
+                      Michigan =
+                      apply((cor.diff$Michigan > 0), 2, as.numeric) -
+                      apply((cor.diff$Michigan < 0), 2, as.numeric))
+for (i in 1:length(cor.diff.sign)){
+  rownames(cor.diff.sign[[i]]) <- colnames(cor.diff.sign[[i]])
+}
+
+dist.HM <- metaDI(cor.diff.sign$Harvard, cor.diff.sign$Michigan,
+                  GS, 3, permDI = TRUE)
+str(dist.HM)
+@ 
+
+
+\section{Network display}
+
+\subsection{Single-study network}
+
+{\tt plotNW} is a wrapper function of {\tt plot.graph} in {\tt Rgraphviz}
+package with specific settings. Nodes represent genes and edges represent
+relationships between genes. Edges are colored in from blue to red 
+indicating correlation value of -1 to 1. This way we do not need to 
+threshold correlation values for drawing edges. 
+One can also choose to color nodes according to
+the corresponding genes' DE information. Arguments that are accepted 
+by {\tt plot.graph} can be passed. Figure~\ref{fig:nw} below 
+is an example with the set GO:0019216 drawn for the Michigan normal group,
+with hypothetical DE (differential expression) information. 
+
+%% Code chunk 5
+\begin{figure}[hbt]
+  \begin{center}
+    \setkeys{Gin}{width = 0.8\textwidth}
+<<fig = TRUE, echo = TRUE, width = 7, height = 5>>=
+setid <- "GO:0019216"
+gid <- GS[[setid]]
+ss <- c("SERPINA3", "SOD1", "SCAP", "NPC2", "ADIPOQ",
+        "PRKAA1", "AGT", "PPARA", "BMP6", "BRCA1")
+plotNW(genes = ss, cormatrix = corr.n$Michigan[gid, gid], 
+       node.de = c(rep(1, 5), rep(0, 5)), ncolor = "yellow", 
+       ecolor = bluered(201), ewidth = 5, gtype = "circo")
+@ 
+\caption{Network display of a gene set. Edge colors range 
+  from blue to red to indicate the correlation range of from -1 to 1.
+Differentially expressed gene nodes are colored in yellow.}
+\label{fig:nw}
+\end{center}
+\end{figure}
+
+
+
+
+\subsection{Multi-edge network}
+
+The function {\tt plotMNW} places nodes on a circle boundary and 
+connects every pair of nodes with multiple edges corresponding to 
+multiple studies of interest. Figure~\ref{fig:mnw} below is an example 
+of GO:0008033 with three studies.
+
+%% Code chunk 6
+\begin{figure}[hbt]
+  \begin{center}
+    \setkeys{Gin}{width = 0.7\textwidth}
+<<fig = TRUE, echo = TRUE, width = 7, height = 7>>=
+setid <- "GO:0008033"
+gid <- GS[[setid]]
+ss <- c("KARS", "SARS", "AARS", "SSB", "POP1", "RPP30")
+cormatrix.list <- list(corr.n$Harvard[gid, gid], corr.n$Stanford[gid, gid],
+                       corr.n$Michigan[gid, gid])
+plotMNW(cormatrix.list, genes = ss, mycolors = bluered(201),
+        ncolor = "yellow", node.de = c(rep(1, 3), rep(0, 3)),
+        lwd = 5, jt = .3)
+@ 
+\caption{Multi-edge network display. Three lines per edge represent 
+three study-specific correlations. Edges with similar color across studies
+indicate study agreement for the corresponding gene pair.
+Colors range from blue to red to indicate the correlation range of from -1
+to 1.}
+\label{fig:mnw}
+\end{center}
+\end{figure}
+
+
+
+\end{document}
+
+
+
