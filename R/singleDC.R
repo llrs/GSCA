@@ -1,3 +1,55 @@
+#' The function to run a single-study GSCA, differential co-expression (DC)
+#' analysis
+#' 
+#' This function runs a single-study GSCA, differential co-expression (DC)
+#' analysis, described in Choi and Kendziorski (2009).  The condition-specific
+#' gene-gene pairwise correlations are first calculated; then for each gene set
+#' defined in \code{GSdefList}, the dispersion index is calculated across
+#' condition-specific correlations.
+#' 
+#' Samples are randomly permuted across conditions for \code{nperm} times.
+#' Permutation-based p-values are calculated, based on the rank of observed
+#' \code{DI} among permuted index values.
+#' 
+#' Samples (columns) are permuted across conditions. For each permutation,
+#' condition-specific correlations are re-calculated based on permuted samples,
+#' and dispersion indices (DIs) are calculated based on those permutation-based
+#' correlations. As focus is on difference, the p-value for each gene set is
+#' calculated as:
+#' 
+#' p = sum(permutation DIs >= observed DI) / nperm .
+#' 
+#' @param data A data matrix of rows representing genes and columns
+#' representing arrays. \code{rownames(data)} is used to subset a sub-matrix
+#' from \code{data} for each gene set. (Rows must be named by gene IDs used in
+#' \code{GSdefList}. For example, if \code{GSdefList} defines gene sets in
+#' Entrez Gene IDs, \code{rownames(data)} should be Entrez Gene IDs.
+#' @param group A numeric vector that specifies the number of arrays (columns)
+#' in each condition. For example, if \code{c(10, 5)} is provided, first 10
+#' columns of the \code{data} matrix are used for one condition and the next 5
+#' are used for the other condition.
+#' @param GSdefList A list of character vectors that define gene sets. Each
+#' entry of this list is a gene set.
+#' @param nperm The desired number of permutations.
+#' @return \item{DI}{The dispersion index vector for each gene set.}
+#' \item{pvalue}{The permutation-based p-value for each gene set.}
+#' \item{permv}{The permutation-based DI matrix, of \code{nperm} columns. The
+#' first column is identical to what is returned by \code{DI}.}
+#' @note Currently, \code{singleDC} implements DC analysis for two conditions
+#' (e.g., tumor vs. normal) and three conditions (e.g., AA, AB, and BB
+#' genotypes). For three conditions, pairwise DIs are first calculated and
+#' averaged (internally).
+#' @author YounJeong Choi
+#' @references Choi and Kendziorski, submitted.
+#' @keywords GSCA DC
+#' @examples
+#' 
+#' data(LungCancer3)
+#' GS <- LungCancer3$info$GSdef
+#' GSdesc <- LungCancer3$info$Name
+#' dc.M <- singleDC(data = LungCancer3$data$Michigan, group = c(86, 10),
+#' GSdefList = GS, nperm = 3)
+#' 
 `singleDC` <- function(data, group, GSdefList, nperm){
 
    DI=rep(0,length(GSdefList))

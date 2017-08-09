@@ -12,3 +12,4 @@ Description: Runs various gene set correlation analyses, including
 License: LGPL >= 2.0
 LazyLoad: yes
 Packaged: 2009-09-12 02:27:57 UTC; kendzior
+RoxygenNote: 6.0.1
