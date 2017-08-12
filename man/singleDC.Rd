@@ -63,7 +63,6 @@ GS <- LungCancer3$info$GSdef
 GSdesc <- LungCancer3$info$Name
 dc.M <- singleDC(data = LungCancer3$data$Michigan, group = c(86, 10),
 GSdefList = GS, nperm = 3)
-
 }
 \references{
 Choi and Kendziorski, submitted.

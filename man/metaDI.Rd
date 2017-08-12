@@ -85,7 +85,6 @@ for (i in 1:length(cor.diff.sign)) {
 rownames(cor.diff.sign[[i]]) <- colnames(cor.diff.sign[[i]])
 }
 dist.HM <- metaDI(cor.diff.sign$Harvard, cor.diff.sign$Michigan, GS, 3, permDI = TRUE)
-
 }
 \references{
 Choi and Kendziorski, submitted

@@ -47,14 +47,15 @@ gid <- GS[[setid]]
 ss <- c("SERPINA3", "SOD1", "SCAP", "NPC2", "ADIPOQ", "PRKAA1", "AGT",
 "PPARA", "BMP6", "BRCA1")
 
-plotNW(genes = ss, cormatrix = cor(t(LungCancer3$data$Michigan[gid, 87:96]), use = "pairwise.complete.obs"), node.de = c(rep(1, 5), rep(0, 5)), ncolor = "yellow", ecolor = bluered(201), ewidth = 5, gtype = "circo")
-
+plotNW(genes = ss, cormatrix = cor(t(LungCancer3$data$Michigan[gid, 87:96]),
+use = "pairwise.complete.obs"), node.de = c(rep(1, 5), rep(0, 5)),
+ncolor = "yellow", ecolor = bluered(201), ewidth = 5, gtype = "circo")
 }
 \references{
 Choi and Kendziorski (2009)
 }
 \seealso{
-\code{\link{plot.graph}}, \code{\link{Rgraphviz}}
+\code{\link[Rgraphviz]{plot.graph}}
 }
 \author{
 YounJeong Choi

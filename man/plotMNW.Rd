@@ -2,8 +2,7 @@
 % Please edit documentation in R/plotMNW.R
 \name{plotMNW}
 \alias{plotMNW}
-\title{The function to draw a multi-edge network from a list of correlation
-matrices from multiple studies.}
+\title{Draw a multi-edge network from multiple studies.}
 \usage{
 plotMNW(cormatrix.list, genes = NULL, mycolors = bluered(201),
   mygrey = rev(grey(seq(0, 1, by = 0.01))), ncolor = "white",
@@ -22,6 +21,8 @@ studies.}
 implemented by \code{gplots}, which sets c("blue", "white", "red") for the
 correlation of c(-1, 0, 1).}
 
+\item{mygrey}{Grey scale}
+
 \item{ncolor}{Node color for selected genes specified by \code{node.de}.}
 
 \item{node.de}{A vector of 0's and 1's. The "1" nodes are colored in
@@ -33,11 +34,21 @@ correlation of c(-1, 0, 1).}
 
 \item{jt}{Distance between adjacent lines in an edge}
 
+\item{color}{logical: Should the edges be colored ?}
+
 \item{lwd}{The edge line thickness}
 
 \item{xlab1}{Sub-text to be place below the network}
 
+\item{corv.decrease}{logical: Should the edges be ordered by decreasing size ?}
+
 \item{text.cex}{Node font size}
+
+\item{range.cutoff}{Numeric value of the ranges or "sign"}
+
+\item{range.agree}{Numeric value that affects the edges}
+
+\item{sign.agree}{Numeric value that affects edges}
 
 \item{\dots}{The rest of arguments are passed to \code{plot}.}
 }
@@ -57,7 +68,6 @@ including too many genes (nodes) may result in a noninformative network
 plot.
 }
 \examples{
-
 data(LungCancer3)
 GS <- LungCancer3$info$GSdef
 GSdesc <- LungCancer3$info$Name

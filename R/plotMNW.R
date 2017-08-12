@@ -1,14 +1,13 @@
-#' The function to draw a multi-edge network from a list of correlation
-#' matrices from multiple studies.
-#' 
+#' Draw a multi-edge network from multiple studies.
+#'
 #' This function draws a network with multiple lines per edge, representing
 #' multiple study-specific correlations for the corresponding gene pairs. Nodes
 #' can be colored by DE information, and each line in edges can be colored
 #' based on the correlation magnitude and direction.
-#' 
+#'
 #' Edge lines are sorted first and put in order separately for every edge, for
 #' effective display of study agreement.
-#' 
+#'
 #' @param cormatrix.list A list of symmetric correlation matrices from multiple
 #' studies.
 #' @param genes Node names to be displayed in the network plot. If \code{NULL}
@@ -25,37 +24,49 @@
 #' @param lwd The edge line thickness
 #' @param xlab1 Sub-text to be place below the network
 #' @param text.cex Node font size
+#' @param mygrey Grey scale
+#' @param color logical: Should the edges be colored ?
+#' @param corv.decrease logical: Should the edges be ordered by decreasing size ?
+#' @param range.cutoff Numeric value of the ranges or "sign"
+#' @param range.agree Numeric value that affects the edges
+#' @param sign.agree Numeric value that affects edges
 #' @param \dots The rest of arguments are passed to \code{plot}.
 #' @note Because edges tend to be thicker as the number of studies grow larger,
 #' including too many genes (nodes) may result in a noninformative network
 #' plot.
 #' @author YounJeong Choi
+#' @importFrom grDevices grey
+#' @importFrom graphics lines plot symbols text
+#' @importFrom methods new
+#' @importFrom stats as.dist cor
+#' @importFrom utils combn
+#' @importFrom gplots bluered
 #' @references Choi and Kendziorski (2009)
 #' @keywords GSCA network multi-edge
+#' @export
 #' @examples
-#' 
 #' data(LungCancer3)
 #' GS <- LungCancer3$info$GSdef
 #' GSdesc <- LungCancer3$info$Name
-#' 
+#'
 #' setid <- "GO:0008033"
 #' gid <- GS[[setid]]
 #' ss <- c("KARS", "SARS", "AARS", "SSB", "POP1", "RPP30")
-#' 
+#'
 #' data.list <- list(Harvard = LungCancer3$data$Harvard[gid, 140:156],
 #' Stanford = LungCancer3$data$Stanford[gid, 42:46],
 #' Michigan = LungCancer3$data$Michigan[gid, 87:96])
-#' 
+#'
 #' cormatrix.list <- lapply(lapply(data.list, t), cor,
 #' use = "pairwise.complete.obs")
-#' 
+#'
 #' plotMNW(cormatrix.list, genes = ss, mycolors = bluered(201), ncolor =
 #' "yellow", node.de = c(rep(1, 3), rep(0, 3)), lwd = 5, jt = 0.3)
-#' 
+#'
 `plotMNW` <-
 function(cormatrix.list, genes = NULL,
   mycolors = bluered(201), mygrey = rev(grey(seq(0,1, by = .01))),
-  ncolor = "white", node.de = NULL, 
+  ncolor = "white", node.de = NULL,
   r = 10, nr = 2, jt = .1, color = TRUE, lwd = 1, xlab1 = "",
   corv.decrease = FALSE, text.cex = 1, range.cutoff = 2,
   range.agree = NULL, sign.agree = 1, ...){
@@ -70,11 +81,11 @@ function(cormatrix.list, genes = NULL,
 
   if (is.null(range.agree)) range.agree <- nS
   if (range.agree > nS) range.agree <- nS
-  
+
   if (is.null(genes)){
     genes <- hid
   }
-  
+
   edges <- combn(genes, 2, make.edgename)
   ne <- length(edges)
 
@@ -101,7 +112,7 @@ function(cormatrix.list, genes = NULL,
     n2 = gpairs[2, i]
 
     if (cx[n1] != cx[n2]){
-      t = (cy[n2] - cy[n1]) / (cx[n2] - cx[n1])    
+      t = (cy[n2] - cy[n1]) / (cx[n2] - cx[n1])
     } else {
       t = 2.78588e+15 # tangent becomes Inf, so put in the biggest value
     }
@@ -109,7 +120,7 @@ function(cormatrix.list, genes = NULL,
     x2 = cx[n2] + (1:nS - mean(1:nS)) * jt * t / sqrt(1 + t^2) * (-1)
     y1 = cy[n1] + (1:nS - mean(1:nS)) * jt / sqrt(1 + t^2)
     y2 = cy[n2] + (1:nS - mean(1:nS)) * jt / sqrt(1 + t^2)
-    
+
     if (color){
       corv = sort(round(corr.gs[,edges[i]] * 100) + 101,
         decreasing = corv.decrease)
@@ -124,9 +135,9 @@ function(cormatrix.list, genes = NULL,
           sum(corr.gs[,edges[i]] <= 0) >= sign.agree){
         d = TRUE
       }
-      
+
     } else {
-      
+
       if (range.agree == nS){
         if (diff(range(corr.gs[,edges[i]])) <= range.cutoff){
           d = TRUE
@@ -151,7 +162,7 @@ function(cormatrix.list, genes = NULL,
         }
       }
     }
-    
+
   }
 
   if (is.null(node.de)){
@@ -167,13 +178,13 @@ function(cormatrix.list, genes = NULL,
     nc <- rep("white", ng)
     nc[index] <- ncolor
   }
-  
+
   for (i in 1:ng) {
     symbols(cx[i], cy[i], circles = nr, add = T, inches = FALSE, bg = nc[i])
   }
   text(cx, cy, genes, cex = text.cex)
   if (range.cutoff < 2 | sign.agree > 1){
-    cat(ned, "out of", ne, "edges are drawn.\n")
+    message(ned, "out of", ne, "edges are drawn.\n")
     return(ned)
   }
 }
